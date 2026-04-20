@@ -413,6 +413,17 @@ end
 local function check_peers_updates(ctx)
     local dict = ctx.dict
     local u = ctx.upstream
+
+    local ppeers, err = get_primary_peers(u)
+    if ppeers then
+        ctx.primary_peers = preprocess_peers(ppeers, ctx.port)
+    end
+
+    local bpeers, err = get_backup_peers(u)
+    if bpeers then
+        ctx.backup_peers = preprocess_peers(bpeers, ctx.port)
+    end
+
     local key = "v:" .. u
     local ver, err = dict:get(key)
     if not ver then
@@ -518,7 +529,7 @@ check = function(premature, ctx)
     end
 end
 
-local function preprocess_peers(peers, port)
+function preprocess_peers(peers, port)
     local n = #peers
     for i = 1, n do
         local p = peers[i]
@@ -627,6 +638,7 @@ function _M.spawn_checker(opts)
         upstream = u,
         primary_peers = preprocess_peers(ppeers, opts.port),
         backup_peers = preprocess_peers(bpeers, opts.port),
+        port = opts.port,
         http_req = http_req,
         timeout = timeout,
         interval = interval,
