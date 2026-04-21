@@ -410,6 +410,23 @@ local function upgrade_peers_version(ctx, peers, is_backup)
     end
 end
 
+local function preprocess_peers(peers, port)
+    local n = #peers
+    for i = 1, n do
+        local p = peers[i]
+        local name = p.name
+
+        if name then
+            local from, to, err = re_find(name, [[^(.*):\d+$]], "jo", nil, 1)
+            if from then
+                p.host = sub(name, 1, to)
+                p.port = port or tonumber(sub(name, to + 2))
+            end
+        end
+    end
+    return peers
+end
+
 local function check_peers_updates(ctx)
     local dict = ctx.dict
     local u = ctx.upstream
@@ -527,23 +544,6 @@ check = function(premature, ctx)
         update_upstream_checker_status(ctx.upstream, false)
         return
     end
-end
-
-function preprocess_peers(peers, port)
-    local n = #peers
-    for i = 1, n do
-        local p = peers[i]
-        local name = p.name
-
-        if name then
-            local from, to, err = re_find(name, [[^(.*):\d+$]], "jo", nil, 1)
-            if from then
-                p.host = sub(name, 1, to)
-                p.port = port or tonumber(sub(name, to + 2))
-            end
-        end
-    end
-    return peers
 end
 
 function _M.spawn_checker(opts)
